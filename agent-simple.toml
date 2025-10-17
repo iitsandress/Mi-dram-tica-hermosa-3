@@ -1,0 +1,8 @@
+version = "1.0"
+
+[[agents]]
+name = "BasicAgent"
+description = "Agente básico para pruebas"
+author = "S1R4X"
+entrypoint = "qodo.md"
+tools = ["filesystem", "git"]
