@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sorry for all...</title>
+    <link rel="shortcut icon" href="corazon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Una página especial para mi dramática hermosa">
+    <meta name="theme-color" content="#ff69b4">
+</head>
+<body>
+    <!-- Partículas de corazones flotantes (se generan dinámicamente) -->
+    <div id="particulas-container"></div>
+    
+    <!-- Controles de música -->
+    <div class="music-controls">
+        <button id="music-toggle" class="music-btn" title="Reproducir música romántica">
+            🎵
+        </button>
+        <audio id="background-music" loop autoplay>
+            <source src="JVKE - golden hour (official music video).mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- Botón de modo nocturno -->
+    <div class="theme-toggle">
+        <button id="theme-toggle" class="theme-btn" title="Cambiar a modo nocturno">
+            🌙
+        </button>
+    </div>
+
+    <!-- Animación de entrada -->
+    <div class="loading-hearts" id="loading">
+        <div class="heart-loader">💖</div>
+        <p>Cargando...</p>
+    </div>
+
+    <header class="fade-in">
+        <div class="header-content">
+            <h1 class="title-animation">Mi dramatica preciosa <3</h1>
+            <p class="subtitulo-header">I love you sooo much 💗</p>
+            <div class="sparkles">✨</div>
+        </div>
+    <p><a href="relationship_helper.html">Relationship Helper</a></p></header>
+
+    <div class="timeline">
+        <!-- Sección de fotos mejorada -->
+        <div class="momento fade-in-up">
+            <h2>tus fotos 💗</h2>
+            <p>Mi princesa hermosa ❤️</p>
+            <div class="galeria">
+                <div class="image-container" data-index="0">
+                    <img src="1.jpg" alt="Foto especial 1" loading="lazy">
+                    <div class="image-overlay">
+                        <span class="zoom-icon">🔍</span>
+                    </div>
+                </div>
+                <div class="image-container" data-index="1">
+                    <img src="2.jpg" alt="Foto especial 2" loading="lazy">
+                    <div class="image-overlay">
+                        <span class="zoom-icon">🔍</span>
+                    </div>
+                </div>
+                <div class="image-container" data-index="2">
+                    <img src="3.jpg" alt="Foto especial 3" loading="lazy">
+                    <div class="image-overlay">
+                        <span class="zoom-icon">🔍</span>
+                    </div>
+                </div>
+                <div class="image-container" data-index="3">
+                    <img src="4.jpg" alt="Foto especial 4" loading="lazy">
+                    <div class="image-overlay">
+                        <span class="zoom-icon">🔍</span>
+                    </div>
+                </div>
+                <div class="image-container" data-index="4">
+                    <img src="5.jpg" alt="Foto especial 5" loading="lazy">
+                    <div class="image-overlay">
+                        <span class="zoom-icon">🔍</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Frases románticas expandidas -->
+        <div class="momento fade-in-up">
+            <h2>Frases que me recuerdan a ti 😍</h2>
+            <div class="frases-carousel">
+                <div class="frase-item active">
+                    <p>"Te amo más que salir de fiesta"</p>
+                </div>
+                <div class="frase-item">
+                    <p>"el unico lugar donde quiero estar es a tu lado"</p>
+                </div>
+                <div class="frase-item">
+                    <p>"Contigo, cualquier otra cosa deja de ser importante"</p>
+                </div>
+                <div class="frase-item">
+                    <p>"Eres mi razón favorita para sonreír"</p>
+                </div>
+            </div>
+            <div class="carousel-controls">
+                <button class="carousel-btn prev">❮</button>
+                <button class="carousel-btn next">❯</button>
+            </div>
+        </div>
+
+        <!-- Contador mejorado -->
+        <div class="contador-amor fade-in-up">
+            <h2>Nuestro Tiempo Juntos</h2>
+            <div class="contador-grid">
+                <div class="contador-item">
+                    <span id="dias" class="contador-numero">0</span>
+                    <span class="contador-label">días</span>
+                </div>
+                <div class="contador-item">
+                    <span id="horas" class="contador-numero">0</span>
+                    <span class="contador-label">horas</span>
+                </div>
+                <div class="contador-item">
+                    <span id="minutos" class="contador-numero">0</span>
+                    <span class="contador-label">minutos</span>
+                </div>
+                <div class="contador-item">
+                    <span id="segundos" class="contador-numero">0</span>
+                    <span class="contador-label">segundos</span>
+                </div>
+            </div>
+            <p class="contador-mensaje">Cada segundo contigo vale la pena ⏰💕</p>
+        </div>
+
+        <!-- Sección de recuerdos -->
+        <div class="momento fade-in-up">
+            <h2>Mis recuerdos favoritos contigo </h2>
+            <div class="recuerdos-grid">
+                <div class="recuerdo-card">
+                    <div class="recuerdo-icon"></div>
+                    <h3>tu primer regaño en llamada</h3>
+                    <p>no recuerdo que dije, solo se que si me dio miedo el regaño 😥</p>
+                </div>
+                <div class="recuerdo-card">
+                    <div class="recuerdo-icon"></div>
+                    <h3>Nuestras llamadas</h3>
+                    <p>Hablando hasta altas horas, deseando que algun dia podamos hacer todas las llamadas que queramos</p>
+                </div>
+                <div class="recuerdo-card">
+                    <div class="recuerdo-icon"></div>
+                    <h3>El beso que me mandaste en audio <3</h3>
+                    <p>El sonido más hermoso que existe en el universo</p>
+                </div>
+                <div class="recuerdo-card">
+                    <div class="recuerdo-icon"></div>
+                    <h3>el dia que te demostre que eres mi prioridad</h3>
+                    <p>yo estando en la universidad, en una clase muy importante, decidi salirme del salon para poder hablar agusto contigo 🥰</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón de mensajes mejorado -->
+        <div class="mensaje-section fade-in-up">
+            <button class="boton-romantico" onclick="mostrarMensajeSecreto()">
+                <span class="btn-text">Mensaje especial para ti</span>
+                <span class="btn-icon">💌</span>
+            </button>
+            <p class="mensaje-hint">Haz clic para descubrir mensajes especiales 😊</p>
+        </div>
+    </div>
+
+    <!-- Lightbox para las imágenes -->
+    <div id="lightbox" class="lightbox">
+        <div class="lightbox-content">
+            <span class="lightbox-close">&times;</span>
+            <img id="lightbox-img" src="" alt="">
+            <div class="lightbox-nav">
+                <button class="lightbox-prev">❮</button>
+                <button class="lightbox-next">❯</button>
+            </div>
+            <div class="lightbox-counter">
+                <span id="lightbox-current">1</span> / <span id="lightbox-total">5</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación de mensajes -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span class="notification-icon">💕</span>
+            <p id="notification-text"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

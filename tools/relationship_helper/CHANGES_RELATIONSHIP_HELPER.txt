@@ -1,0 +1,5 @@
+Se añadieron las siguientes carpetas y archivos:
+- Analysis files (summary.json, heated_contexts.txt,...)
+- Scripts: chat_summarizer.py, canned_responses.py, message_scheduler.py
+- Página: relationship_helper.html (en la raíz del sitio)
+- Link añadido en index (si existía)

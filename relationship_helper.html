@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Relationship Helper — Mi_dramatica_hermosa_</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{--bg:#fff;--card:#fafafa;--accent:#c96;--text:#111}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:var(--bg);color:var(--text);padding:1rem;max-width:980px;margin:0 auto;}
+    header{display:flex;align-items:center;gap:1rem;padding:1rem 0;}
+    h1{margin:0;font-size:1.6rem;}
+    .card{background:var(--card);border:1px solid #eee;padding:1rem;border-radius:10px;margin-bottom:1rem;box-shadow:0 6px 18px rgba(0,0,0,0.04)}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:1rem}
+    pre{white-space:pre-wrap;font-family:inherit;background:#fff;padding:0.6rem;border-radius:6px;border:1px solid #eee}
+    button.copy{padding:0.4rem 0.6rem;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+    a.download{display:inline-block;margin-right:0.6rem}
+    .templates li{margin-bottom:0.8rem}
+    footer{font-size:0.9rem;color:#666;padding:1rem 0}
+    .word-cloud{display:flex;flex-wrap:wrap;gap:0.5rem}
+    .word{padding:0.25rem 0.5rem;border-radius:6px;background:#fff;border:1px solid #eee;font-size:0.9rem}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Relationship Helper</h1>
+      <div style="color:#666">Herramientas para mejorar la comunicación — Generado automáticamente desde el análisis del chat.</div>
+    </div>
+  </header>
+
+  <section class="card grid">
+    <div>
+      <h2>Archivos de análisis</h2>
+      <p>Puedes descargar los resultados del análisis y el paquete con scripts.</p>
+      <p>
+        <a class="download" href="tools/relationship_helper/analysis/summary.json" download>Descargar summary.json</a>
+        <a class="download" href="tools/relationship_helper/analysis/heated_contexts.txt" download>Descargar heated_contexts.txt</a>
+        <a class="download" href="tools/relationship_helper/analysis/personalized_templates.json" download>Descargar templates</a>
+      </p>
+      <p>
+        <a class="download" href="tools/relationship_helper/relationship_repo_patch.zip" download>Descargar patch (zip)</a>
+      </p>
+
+      <h3>Consejos rápidos</h3>
+      <ul>
+        <li>Si tu pareja se alarmó por un mensaje, pide disculpas <strong>inmediatemente y en serio</strong>.</li>
+        <li>Evita bromas con violencia o amenazas — aunque sean en tono de broma pueden herir o asustar gravemente.</li>
+        <li>Cuando haya tensión, usa una plantilla de desescalado y sugiere hablar en persona o en un momento calmado.</li>
+      </ul>
+
+      <h3>Top palabras (resumen)</h3>
+      <div id="top-words" class="word-cloud"></div>
+    </div>
+
+    <aside class="card">
+      <h3>Plantillas detectadas</h3>
+      <div id="templates-area">
+        <em>Cargando plantillas...</em>
+      </div>
+    </aside>
+  </section>
+
+  <section class="card">
+    <h2>Plantillas rápidas</h2>
+    <p>Haz clic en "copiar" para pegar el mensaje en WhatsApp. Personaliza antes de enviar.</p>
+    <ul class="templates" id="templates-list"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Ejemplos sugeridos (3 casos)</h2>
+    <div id="examples"></div>
+  </section>
+
+  <footer>
+    <p>Para aplicar estos cambios en GitHub: haz un fork, sube los archivos y abre un Pull Request, o aplica manualmente los archivos del zip.</p>
+  </footer>
+
+<script>
+const templates = {"apology_short": "Lo siento, amor. No quise hacerte sentir mal. ¿Podemos hablar en 20 minutos para arreglarlo?", "apology_long": "Quiero pedirte disculpas de corazón, amor. Sé que fallé en esto y quiero escucharte. ¿Me das la oportunidad de hacerlo mejor?", "deescalate": "Siento que esto se está poniendo tenso y no quiero que terminemos mal. ¿Te parece si lo hablamos calmados más tarde?", "checkin": "Hola amor, ¿cómo estás? Solo quería saber cómo te fue hoy.", "appreciation": "Gracias por ser conmigo, amor. Aprecio cuando haces [menciona algo específico]."};
+const topWords = [["eso", 195], ["este", 188], ["mensaje", 176], ["tengo", 128], ["estoy", 124], ["voy", 118], ["solo", 117], ["quiero", 110], ["porque", 102], ["editó", 101], ["soy", 100], ["mamá", 98], ["así", 92], ["bueno", 91], ["amor", 86], ["nada", 84], ["cuando", 82], ["tú", 81], ["ns", 77], ["todo", 77]];
+
+function createTemplateItem(key, text){
+  const li = document.createElement('li');
+  const p = document.createElement('pre');
+  p.textContent = text;
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'Copiar';
+  btn.onclick = ()=>{ navigator.clipboard.writeText(text).then(()=>{ btn.textContent='Copiado'; setTimeout(()=>btn.textContent='Copiar',1200); }) };
+  li.appendChild(p);
+  li.appendChild(btn);
+  return li;
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  // templates list
+  const list = document.getElementById('templates-list');
+  list.innerHTML='';
+  for(const k in templates){
+    list.appendChild(createTemplateItem(k, templates[k]));
+  }
+
+  // templates area summary
+  const area = document.getElementById('templates-area');
+  area.innerHTML='';
+  for(const k in templates){
+    const d = document.createElement('div');
+    d.innerHTML = '<strong>'+k+'</strong>: <small>'+templates[k].slice(0,60).replace(/\n/g," ")+'...</small>';
+    area.appendChild(d);
+  }
+
+  // top words display
+  const tw = document.getElementById('top-words');
+  tw.innerHTML='';
+  if(topWords && topWords.length){
+    topWords.forEach(function(item){ 
+      const span = document.createElement('div');
+      span.className='word';
+      span.textContent = item[0] + ' (' + item[1] + ')';
+      tw.appendChild(span);
+    });
+  } else {
+    tw.textContent = 'No hay datos de top-words disponibles.';
+  }
+
+  // examples injection
+  const examplesDiv = document.getElementById('examples');
+  const exs = [
+    { "title": "Context 1 — broma pesada con amenaza", "short": "Lo siento muchísimo, sé que estuvo mal decir eso. No era real y me equivoqué.", "long": "Sé que lo que escribí fue aterrador e inaceptable. Me disculpo de corazón. No volveré a hacer bromas así y quiero hablar para arreglarlo. ¿Puedo verte o llamarte ahora?", "deescalate": "Siento mucho haberte asustado. No era una broma apropiada. ¿Quieres que lo hablemos ahora o prefieres espacio?" },
+    { "title": "Context 2 — repeticiones que confunden", "short": "Perdón si soné raro, no quise confundirte. ¿Hablamos?","long": "Perdón por los mensajes anteriores, me expresé mal y entiendo si te molestó. Me importa cómo te sientes y quiero escucharte.", "deescalate": "Creo que esto se está elevando, mejor hablamos con calma más tarde para entendernos." },
+    { "title": "Context 3 — mensajes cortos que generan tensión", "short": "Lo siento si te dolió lo que dije. No era mi intención.","long":"Quiero disculparme por mis palabras impulsivas. Valoro mucho nuestra relación y quiero mejorar. ¿Hablamos cuando puedas?","deescalate":"Siento que esto se está poniendo tenso. Si quieres, tomo un momento y hablamos cuando estemos tranquilos." }
+  ];
+  exs.forEach(e=>{
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = '<h4>'+e.title+'</h4>' +
+      '<p><strong>Disculpa corta:</strong> <code>'+e.short+'</code> <button class="copy" data-text="'+e.short.replace(/"/g,'&quot;')+'">Copiar</button></p>' +
+      '<p><strong>Disculpa larga:</strong> <code>' + e.long + '</code></p>' +
+      '<p><strong>De-escalado:</strong> <code>' + e.deescalate + '</code></p>';
+    examplesDiv.appendChild(c);
+  });
+
+  // delegate copy buttons in examples
+  examplesDiv.addEventListener('click', function(ev){
+    if(ev.target && ev.target.matches('button.copy')){
+      const txt = ev.target.getAttribute('data-text');
+      navigator.clipboard.writeText(txt).then(()=>{
+        ev.target.textContent = 'Copiado';
+        setTimeout(()=>ev.target.textContent='Copiar',1200);
+      });
+    }
+  });
+
+});
+</script>
+
+</body>
+</html>
