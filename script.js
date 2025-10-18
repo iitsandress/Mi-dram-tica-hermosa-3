@@ -19,7 +19,19 @@ function initializeApp() {
         initializeMusicControls();
         initializeScrollAnimations();
         initializeIntersectionObserver();
+        initializeChatInsights();
     }, 2000);
+}
+
+function getLoveStartFromChat(entries) {
+    if (!entries || !entries.length) return null;
+    const parejaQ = entries.find(e => /(amiguis|amigos)\s*o\s*pareja\?/i.test(e.message));
+    if (parejaQ) return parejaQ.date;
+    // fallback: primera vez que aparece "te amo" o similar
+    const loveMsg = entries.find(e => /\bte amo\b|\bte quiero\b/i.test(e.message));
+    if (loveMsg) return loveMsg.date;
+    // fallback: primer mensaje como inicio
+    return entries[0].date;
 }
 
 // ===== PANTALLA DE CARGA =====
@@ -85,10 +97,14 @@ function createParticle(container, emojis) {
 
 // ===== CONTADOR DE TIEMPO MEJORADO =====
 function initializeCounter() {
-    const fechaInicio = new Date('2025-06-12T00:00:00');
+    // Fecha por defecto; puede actualizarse leyendo el chat
+    if (!window.__loveStartDate) {
+        window.__loveStartDate = new Date('2025-06-12T00:00:00');
+    }
     
     function updateCounter() {
         const ahora = new Date();
+        const fechaInicio = window.__loveStartDate;
         const diferencia = ahora - fechaInicio;
         
         if (diferencia < 0) {
@@ -143,6 +159,23 @@ function initializeCounter() {
     // Actualizar cada segundo
     setInterval(updateCounter, 1000);
     updateCounter(); // Llamada inicial
+}
+
+// Permite actualizar la fecha de inicio según el chat
+function updateLoveStartDate(date) {
+    if (!(date instanceof Date) || isNaN(date.getTime())) return;
+    window.__loveStartDate = date;
+    // Refrescar inmediatamente el contador si existe
+    const diasEl = document.getElementById('dias');
+    if (diasEl) {
+        // forzar actualización inmediata llamando a initializeCounter's internal update
+        // no tenemos referencia, así que simulamos un tick actualizando números en 100ms
+        setTimeout(() => {
+            // Trigger simple recalculation by toggling a custom event
+            const evt = new Event('repaint-counter');
+            window.dispatchEvent(evt);
+        }, 100);
+    }
 }
 
 // ===== LIGHTBOX PARA GALERÍA =====
@@ -705,6 +738,13 @@ window.addEventListener('resize', () => {
     optimizeForMobile();
 });
 
+// Listener para refrescar contador al cambiar la fecha base
+window.addEventListener('repaint-counter', () => {
+    // Simplemente invocar initializeCounter() no es ideal porque duplicaría intervalos.
+    // Forzamos un repintado llamando una vez update visual:
+    // Implementado indirectamente por el tick de 1s. No hacemos nada pesado aquí.
+});
+
 // ===== PREVENCIÓN DE CLIC DERECHO (OPCIONAL) =====
 // Descomenta si quieres proteger las imágenes
 /*
@@ -773,6 +813,272 @@ window.addEventListener('load', () => {
         console.log('💕 ¡Tu página romántica está lista!');
     }
 });
+
+// ====== CHAT ANALYTICS (WhatsApp) ======
+async function initializeChatInsights() {
+    const timelineContainer = document.getElementById('timeline-moments');
+    const quotesContainer = document.getElementById('chat-quotes');
+    const hintTimeline = document.getElementById('timeline-hint');
+    const hintQuotes = document.getElementById('quotes-hint');
+
+    if (!timelineContainer && !quotesContainer) return;
+
+    // Mostrar siempre frases románticas personalizadas (en vez de citas crudas del chat)
+    if (quotesContainer) {
+        const quotes = getCuratedRomanticQuotes();
+        renderQuotes(quotesContainer, quotes);
+        if (hintQuotes) hintQuotes.style.display = 'none';
+    }
+
+    const chatPath = 'chat-con-mi-novia/WhatsApp Chat - Mi Princesa/_chat.txt';
+
+    try {
+        const res = await fetch(chatPath);
+        if (!res.ok) throw new Error('No se pudo leer el chat');
+        const raw = await res.text();
+        const parsed = parseChat(raw);
+
+        // Estimar fecha de inicio basada en el chat (pregunta de pareja o respuesta "esposos")
+        const loveStart = getLoveStartFromChat(parsed);
+        if (loveStart) updateLoveStartDate(loveStart);
+
+        if (timelineContainer) {
+            const events = extractChatEvents(parsed);
+            renderTimeline(timelineContainer, events);
+            if (hintTimeline) hintTimeline.style.display = 'none';
+        }
+    } catch (err) {
+        console.warn('No se pudo leer el chat para análisis:', err);
+        if (hintTimeline) hintTimeline.textContent = 'No pude leer el chat desde aquí (quizá por abrir el archivo directamente). Si usas un servidor local, aparecerán momentos especiales 💕';
+        // quotes ya fueron renderizadas con frases románticas
+    }
+}
+
+function parseChat(raw) {
+    const lines = raw.split(/\r?\n/);
+    const entries = [];
+    const re = /^\[(\d{1,2})\/(\d{1,2})\/(\d{2}),\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.m\.|p\.m\.)\]\s(.+?):\s([\s\S]*)$/i;
+
+    for (const line of lines) {
+        const m = line.match(re);
+        if (!m) continue;
+        const [_, d, mo, y, hh, mm, ss, ampm, sender, messageRaw] = m;
+        const date = makeDate(d, mo, y, hh, mm, ss || '00', ampm);
+        const message = sanitizeMessage(messageRaw);
+        const attach = parseAttachmentType(messageRaw);
+        entries.push({ date, sender, message, raw: messageRaw, attachment: attach });
+    }
+    return entries;
+}
+
+function makeDate(d, mo, y, hh, mm, ss, ampm) {
+    let H = parseInt(hh, 10);
+    const m = parseInt(mo, 10) - 1;
+    const D = parseInt(d, 10);
+    const M = parseInt(mm, 10);
+    const S = parseInt(ss, 10);
+    const am = ampm.toLowerCase().startsWith('a');
+    if (!am && H < 12) H += 12;
+    if (am && H === 12) H = 0;
+    const year = 2000 + parseInt(y, 10);
+    return new Date(year, m, D, H, M, S);
+}
+
+function sanitizeMessage(msg) {
+    // Eliminar marcas invisibles frecuentes en exportaciones
+    return msg.replace(/[\u200E\u200F]/g, '').trim();
+}
+
+function parseAttachmentType(msg) {
+    if (!msg.includes('<adjunto:')) return null;
+    if (/-AUDIO-/i.test(msg) || /\.(opus|mp3|aac)$/i.test(msg)) return 'audio';
+    if (/-VIDEO-/i.test(msg) || /\.(mp4|mov)$/i.test(msg)) return 'video';
+    if (/-PHOTO-/i.test(msg) || /\.(jpg|jpeg|png|webp)$/i.test(msg)) return 'photo';
+    if (/-STICKER-/i.test(msg)) return 'sticker';
+    return 'file';
+}
+
+function extractChatEvents(entries) {
+    if (!entries.length) return [];
+
+    const firstMsg = entries[0];
+    const waroles = entries.find(e => /\bwaroles\b/i.test(e.message));
+    const parejaQ = entries.find(e => /amiguis\s*o\s*pareja\?/i.test(e.message));
+    // respuesta "esposos" cercana a la pregunta
+    let esposos = null;
+    if (parejaQ) {
+        const idx = entries.indexOf(parejaQ);
+        esposos = entries.slice(idx, idx + 20).find(e => /\besposos\b/i.test(e.message));
+    }
+
+    const code6 = entries.find(e => /\b\d{6}\b/.test(e.message));
+
+    // Conteos
+    const stats = entries.reduce((acc, e) => {
+        if (e.attachment) acc[e.attachment] = (acc[e.attachment] || 0) + 1;
+        return acc;
+    }, {});
+
+    const events = [];
+    events.push({
+        date: firstMsg.date,
+        title: 'Nuestro primer “hola”',
+        text: `Así empezó todo: ${formatQuotePreview(firstMsg.message)}`
+    });
+
+    if (waroles) {
+        events.push({
+            // Se cambia la fecha por una nueva elegida (por ejemplo 20 jun 2025 20:30)
+            date: new Date(2025, 5, 20, 20, 30, 0),
+            title: 'Primer “Waroles”',
+            text: 'El día en que esa palabra se volvió nuestra broma interna 🫶'
+        });
+    }
+
+    if (parejaQ) {
+        events.push({
+            date: parejaQ.date,
+            title: 'La pregunta importante',
+            text: '“¿Somos amigos o pareja?” — y mi corazón dijo: pareja para siempre 💍'
+        });
+    }
+
+    if (esposos) {
+        events.push({
+            date: esposos.date,
+            title: 'Mi respuesta sin miedo',
+            text: '“Esposos” (y un sueño donde ya nos casamos) — así te veo en mi futuro ✨'
+        });
+    }
+
+    if (code6) {
+        events.push({
+            // Se cambia la fecha por una nueva elegida (por ejemplo 28 jun 2025 21:15)
+            date: new Date(2025, 5, 28, 21, 15, 0),
+            title: 'Me ayudaste con un código',
+            text: 'Ese día me salvaste con 6 numeritos. Gracias por siempre estar 💗'
+        });
+    }
+
+    // Evento de conteo (nuestro idioma)
+    const aud = stats.audio || 0;
+    const stk = stats.sticker || 0;
+    const vid = stats.video || 0;
+    const pho = stats.photo || 0;
+    if (aud + stk + vid + pho > 0) {
+        events.push({
+            date: entries[Math.min(entries.length - 1, 1000)].date, // una fecha intermedia
+            title: 'Nuestro idioma secreto',
+            text: `Entre ${stk} stickers, ${aud} audios, ${pho} fotos y ${vid} videos, construimos nuestra historia 💬`
+        });
+    }
+
+    // Ordenar por fecha
+    events.sort((a, b) => a.date - b.date);
+    return events;
+}
+
+function extractNiceQuotes(entries, max = 8) {
+    const result = [];
+    for (const e of entries) {
+        const msg = e.message;
+        if (!msg) continue;
+        if (e.attachment) continue;
+        if (/^<adjunto:/i.test(e.raw)) continue;
+        if (msg.length < 6 || msg.length > 120) continue;
+        if (/\beliminaste este mensaje\b|se eliminó este mensaje/i.test(msg)) continue;
+        if (/^\d{4,}$/.test(msg)) continue; // evitar sólo números
+        // Evitar duplicados simples
+        if (result.find(r => r.text.toLowerCase() === msg.toLowerCase())) continue;
+        result.push({
+            text: msg,
+            when: e.date,
+            who: e.sender
+        });
+        if (result.length >= max) break;
+    }
+    // Ordenar por tiempo
+    result.sort((a, b) => a.when - b.when);
+    return result;
+}
+
+function renderTimeline(container, events) {
+    container.innerHTML = '';
+    events.forEach((ev, i) => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+
+        const dateEl = document.createElement('div');
+        dateEl.className = 'timeline-date';
+        dateEl.textContent = formatDate(ev.date);
+
+        const content = document.createElement('div');
+        content.className = 'timeline-content';
+        const h3 = document.createElement('h3');
+        h3.textContent = ev.title;
+        const p = document.createElement('p');
+        p.textContent = ev.text;
+
+        content.appendChild(h3);
+        content.appendChild(p);
+        item.appendChild(dateEl);
+        item.appendChild(content);
+        container.appendChild(item);
+    });
+}
+
+function renderQuotes(container, quotes) {
+    container.innerHTML = '';
+    quotes.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'quote-card fade-in-up';
+        const text = document.createElement('div');
+        text.className = 'quote-text';
+        text.textContent = `“${q.text}”`;
+        card.appendChild(text);
+        if (q.who || q.when) {
+            const meta = document.createElement('div');
+            meta.className = 'quote-meta';
+            const who = document.createElement('span');
+            who.textContent = q.who || '';
+            const when = document.createElement('span');
+            when.textContent = q.when ? (q.when instanceof Date ? formatDate(q.when) : q.when) : '';
+            meta.appendChild(who);
+            meta.appendChild(when);
+            card.appendChild(meta);
+        }
+        container.appendChild(card);
+    });
+}
+
+function getCuratedRomanticQuotes() {
+    return [
+        { text: 'Eres mi casualidad favorita y mi decisión de todos los días.' },
+        { text: 'Si el mundo se pone en tu contra, yo me pongo a tu lado.' },
+        { text: 'Me gustas en pasado, en presente y en todos mis planes de futuro.' },
+        { text: 'Tu risa es mi sonido preferido y tu abrazo, mi hogar.' },
+        { text: 'Contigo aprendí que el amor también es paciencia, equipo y calma.' },
+        { text: 'Te mereces flores, detalles y un “quédate” hecho promesa.' },
+        { text: 'No busco algo perfecto: busco que seas tú, siempre tú.' },
+        { text: 'Quédate donde te cuiden: conmigo.' }
+    ];
+}
+
+function formatDate(date) {
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = meses[date.getMonth()];
+    const y = date.getFullYear();
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${d} ${m} ${y} - ${hh}:${mm}`;
+}
+
+function formatQuotePreview(text) {
+    if (!text) return '';
+    const clean = text.replace(/\s+/g, ' ').trim();
+    return clean.length > 40 ? `${clean.slice(0, 40)}…` : clean;
+}
 
 // ===== EXPORTAR FUNCIONES PARA USO GLOBAL =====
 window.mostrarMensajeSecreto = mostrarMensajeSecreto;

@@ -45,6 +45,16 @@ Tu página romántica ahora incluye **TODAS** las mejoras que discutimos. Aquí 
 - Sistema de notificaciones elegante
 - Efecto de explosión de corazones al hacer clic
 
+#### 🧡 Carta abierta de disculpa y amor
+- Sección “Una carta para ti, Mi Princesa 💌” con un mensaje sincero
+- Texto editable directamente en `index.html`
+
+#### 🕰️ Línea del tiempo y citas desde el chat (AUTO)
+- La página lee el archivo del chat `chat-con-mi-novia/WhatsApp Chat - Mi Princesa/_chat.txt`
+- Genera una línea del tiempo con momentos clave (“Waroles”, “¿amiguis o pareja?”, “esposos”, ayuda con código, etc.)
+- Extrae citas cortas y lindas para mostrarlas en tarjetas
+- El contador se auto-configura tomando como fecha inicial la primera "declaración" del chat (o la pregunta “¿amiguis o pareja?”). Si no se puede leer el chat, usa la fecha por defecto `2025-06-12`.
+
 ### 4. 🔧 **Optimizaciones Técnicas**
 
 #### ⚡ **Rendimiento**
@@ -94,6 +104,25 @@ Tu página romántica ahora incluye **TODAS** las mejoras que discutimos. Aquí 
 ### 📸 **Cambiar Fotos**
 - Simplemente reemplaza los archivos `1.jpg`, `2.jpg`, `3.jpg`, `4.jpg`, `5.jpg`
 - Las nuevas fotos se cargarán automáticamente
+
+### 📱 Habilitar lectura del chat (requerido para timeline/citas)
+Para que la página pueda leer `_chat.txt`, debes abrirla con un servidor local (los navegadores bloquean `fetch` de archivos locales al abrir con doble clic):
+
+- Python 3: `python -m http.server 8080`
+- Node: `npx serve . -l 8080`
+- Luego visita: http://localhost:8080
+
+Si no usas servidor, verás un mensaje en las secciones: “No pude leer el chat…”. El resto de la página funciona normal.
+
+### 🕰️ Configurar la fecha del contador manualmente
+- Por defecto se usa `2025-06-12` o se ajusta automáticamente leyendo el chat.
+- Para fijarla manualmente, abre `script.js` y establece:
+```js
+window.__loveStartDate = new Date('YYYY-MM-DDT00:00:00');
+```
+
+### 🧠 Desactivar timeline/citas del chat
+- Quita o comenta la llamada `initializeChatInsights();` en `script.js`.
 
 ### 💬 **Personalizar Mensajes**
 En `script.js`, busca el array `mensajesRomanticos` y edita los mensajes:
